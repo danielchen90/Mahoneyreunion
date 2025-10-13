@@ -1,0 +1,718 @@
+"use client"
+
+import React, { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { GlowCard } from "@/components/glow-card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
+import { Check, Star, Users, Bed, DollarSign, RefreshCw, Calendar, CreditCard, CheckCircle, XCircle, ChevronDown, ChevronUp, Info } from "lucide-react"
+import PayPalButton from "@/components/paypal-button"
+import Link from "next/link"
+
+interface RegistrationForm {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  package: string
+  adults: number
+  children: number
+  specialRequests: string
+  emergencyContact: string
+  emergencyPhone: string
+  agreeToTerms: boolean
+}
+
+export default function RegistrationSection() {
+  const [selectedPackage, setSelectedPackage] = useState<string>("")
+  const [currency, setCurrency] = useState<'CAD' | 'USD'>('CAD')
+  const [showPayment, setShowPayment] = useState(false)
+  const [paymentSuccess, setPaymentSuccess] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [expandedSection, setExpandedSection] = useState<string | null>('personal')
+  const [formData, setFormData] = useState<RegistrationForm>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    package: "",
+    adults: 1,
+    children: 0,
+    specialRequests: "",
+    emergencyContact: "",
+    emergencyPhone: "",
+    agreeToTerms: false,
+  })
+
+  // Fixed exchange rates (you can update these or make them dynamic)
+  const exchangeRates = {
+    CAD_TO_USD: 0.74,
+    USD_TO_CAD: 1.35
+  }
+
+  const convertPrice = (cadPrice: number): number => {
+    return currency === 'USD' ? cadPrice * exchangeRates.CAD_TO_USD : cadPrice
+  }
+
+  const formatCurrency = (amount: number): string => {
+    const symbol = currency === 'CAD' ? 'CAD' : 'USD'
+    return `$${Math.round(amount)} ${symbol}`
+  }
+
+  const packages = [
+    {
+      id: "test",
+      name: "Test Payment",
+      price: 1, // CAD - Small amount for testing
+      originalPrice: null,
+      description: "Test the payment system",
+      features: [
+        "Test PayPal integration",
+        "Small amount for testing",
+        "Verify payment flow works",
+        "No actual reservation made",
+        "For development testing only",
+      ],
+      icon: CreditCard,
+      popular: false,
+      note: "⚠️ This is for testing only - not a real reservation"
+    },
+    {
+      id: "deposit",
+      name: "Initial Deposit",
+      price: 100, // CAD
+      originalPrice: null,
+      description: "Secure your spot at the reunion",
+      features: [
+        "Reserves your place at the reunion",
+        "Credited toward accommodation cost",
+        "Due: December 1st, 2025",
+        "Refundable until March 1st, 2026",
+        "Includes reunion planning updates",
+      ],
+      icon: Calendar,
+      popular: true,
+      note: "This is just the deposit - full costs will be collected later"
+    },
+    {
+      id: "full",
+      name: "Full Collective Costs",
+      price: 435, // CAD (350 accommodation + 85 food)
+      originalPrice: null,
+      description: "Complete collective expenses",
+      features: [
+        "Airbnb accommodation for entire reunion",
+        "Shared breakfasts and dinners",
+        "All reunion activities and events",
+        "Welcome package and materials",
+        "Group photos and memories",
+      ],
+      icon: Star,
+      popular: false,
+      note: "Total collective cost per person (includes $100 deposit)"
+    },
+    {
+      id: "info",
+      name: "Individual Expenses",
+      price: 0,
+      originalPrice: null,
+      description: "Your personal responsibility",
+      features: [
+        "Transportation to Orlando",
+        "Lunches and snacks (NOT included)",
+        "Personal activities and entertainment",
+        "Shopping and souvenirs",
+        "Tips and gratuities",
+        "Use Budget Calculator for estimates"
+      ],
+      icon: Users,
+      popular: false,
+      note: "These costs are NOT paid to reunion organizers"
+    },
+  ]
+
+  const handleInputChange = (field: keyof RegistrationForm, value: string | number | boolean) => {
+    if (field === 'agreeToTerms') {
+      console.log('Terms checkbox changed:', value)
+    }
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handlePackageSelect = (packageId: string) => {
+    console.log('Package selected:', packageId)
+    setSelectedPackage(packageId)
+    handleInputChange("package", packageId)
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    // Debug logging
+    console.log('=== FORM SUBMISSION DEBUG ===')
+    console.log('Form submission attempted')
+    console.log('Selected package:', selectedPackage)
+    console.log('Agree to terms:', formData.agreeToTerms)
+    console.log('Form data:', formData)
+    console.log('showPayment current state:', showPayment)
+    console.log('paymentSuccess current state:', paymentSuccess)
+
+    // Validate form
+    if (!selectedPackage || !formData.agreeToTerms) {
+      console.log('❌ Validation failed - missing requirements')
+      console.log('Missing package:', !selectedPackage)
+      console.log('Missing terms agreement:', !formData.agreeToTerms)
+      setPaymentError('Please complete all required fields and agree to the terms.')
+      return
+    }
+
+    console.log('✅ Validation passed, proceeding with submission')
+
+    if (selectedPackage === 'deposit' || selectedPackage === 'test') {
+      console.log('💳 Showing payment section for package:', selectedPackage)
+      setShowPayment(true)
+      setPaymentError(null)
+      console.log('Payment section should now be visible')
+    } else {
+      console.log('📝 No payment required for package:', selectedPackage)
+      console.log('Registration submitted:', formData)
+      setPaymentSuccess(true)
+    }
+  }
+
+  const calculateTotal = () => {
+    const selectedPkg = packages.find((pkg) => pkg.id === selectedPackage)
+    if (!selectedPkg) return 0
+
+    const basePrice = selectedPkg.price * formData.adults
+    const childPrice = selectedPkg.price * 0.5 * formData.children // 50% discount for children
+    return basePrice + childPrice
+  }
+
+  const handlePaymentSuccess = (details: any) => {
+    console.log('=== PAYMENT SUCCESS ===')
+    console.log('Payment successful:', details)
+    console.log('Transaction ID:', details.transactionId)
+    console.log('Amount:', details.amount)
+    console.log('Status:', details.status)
+
+    // Set local state
+    setPaymentSuccess(true)
+    setShowPayment(false)
+    setPaymentError(null)
+
+    // Redirect to success page with payment details
+    const successUrl = new URL('/register/success', window.location.origin)
+    successUrl.searchParams.set('transaction_id', details.transactionId || details.captureId || 'unknown')
+    successUrl.searchParams.set('amount', details.amount?.value || calculateDepositAmount().toString())
+    successUrl.searchParams.set('currency', details.amount?.currency_code || currency)
+    successUrl.searchParams.set('status', details.status || 'completed')
+    successUrl.searchParams.set('registrant', `${formData.firstName} ${formData.lastName}`)
+    successUrl.searchParams.set('email', formData.email)
+    successUrl.searchParams.set('package', selectedPackage || 'unknown')
+
+    console.log('Redirecting to:', successUrl.toString())
+
+    // Small delay to ensure state updates, then redirect
+    setTimeout(() => {
+      window.location.href = successUrl.toString()
+    }, 1000)
+  }
+
+  const handlePaymentError = (error: any) => {
+    console.error('Payment error:', error)
+    setPaymentError(error.message || 'Payment failed. Please try again.')
+  }
+
+  const calculateDepositAmount = () => {
+    console.log('=== CALCULATE DEPOSIT AMOUNT DEBUG ===')
+    console.log('selectedPackage:', selectedPackage)
+    console.log('packages available:', packages.map(p => ({ id: p.id, name: p.name, price: p.price })))
+
+    const selectedPkg = packages.find((pkg) => pkg.id === selectedPackage)
+    console.log('selectedPkg found:', selectedPkg)
+
+    if (!selectedPkg) {
+      console.log('❌ No package found for selectedPackage:', selectedPackage)
+      return 0
+    }
+
+    const pricePerPerson = selectedPkg.price // Use the actual package price (1 CAD for test, 100 CAD for deposit, etc.)
+    const totalPeople = formData.adults + formData.children
+    const totalAmount = pricePerPerson * totalPeople
+    const convertedAmount = convertPrice(totalAmount)
+
+    console.log('✅ Payment calculation:', {
+      selectedPackage,
+      packageName: selectedPkg.name,
+      pricePerPerson,
+      totalPeople,
+      totalAmount,
+      currency,
+      convertedAmount
+    })
+
+    return convertedAmount
+  }
+
+  return (
+    <section id="registration" className="py-20 relative">
+      {/* Subtle overlay for better readability - allows shader background to show through */}
+      <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="text-center mb-16">
+          <h2 className="section-title text-white mb-4 relative drop-shadow-lg">
+            <span className="relative z-10">Register for the Reunion</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/30 via-orange-500/30 to-cyan-500/30 blur-2xl -z-10 scale-110" />
+          </h2>
+          <p className="text-xl text-white/90 max-w-3xl mx-auto text-pretty mb-6 font-medium drop-shadow-md">
+            Secure your spot with an initial deposit. Full payment details and schedule will be provided after registration.
+          </p>
+
+          {/* Currency Toggle */}
+          <div className="flex items-center justify-center space-x-4 mb-6">
+            <span className="text-sm font-medium text-white/90 drop-shadow-md">Currency:</span>
+            <div className="flex bg-white/10 backdrop-blur-md rounded-lg p-1 border border-white/20">
+              <button
+                onClick={() => setCurrency('CAD')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  currency === 'CAD'
+                    ? 'bg-cyan-500 text-white shadow-lg'
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                CAD 🇨🇦
+              </button>
+              <button
+                onClick={() => setCurrency('USD')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  currency === 'USD'
+                    ? 'bg-cyan-500 text-white shadow-lg'
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                USD 🇺🇸
+              </button>
+            </div>
+            <RefreshCw className="w-4 h-4 text-white/60" />
+          </div>
+
+          <div className="bg-cyan-500/20 backdrop-blur-md border border-cyan-400/30 rounded-lg p-4 max-w-2xl mx-auto shadow-lg">
+            <p className="text-sm text-white drop-shadow-md">
+              <strong>Payment Schedule:</strong> Initial deposit of {formatCurrency(convertPrice(100))} per person due December 1st, 2025.
+              Food payment schedule details coming soon!
+            </p>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-12">
+          {/* Package Selection */}
+          <div className="space-y-6">
+            <h3 className="text-2xl font-semibold text-white mb-6 drop-shadow-lg">Reunion Costs Breakdown</h3>
+
+            <div className="space-y-6">
+              {packages.map((pkg, index) => {
+                const IconComponent = pkg.icon
+                const isSelected = selectedPackage === pkg.id
+                const glowColors = ['blue', 'purple', 'orange'] as const
+                const glowColor = glowColors[index % glowColors.length]
+
+                return (
+                  <div
+                    key={pkg.id}
+                    className="relative cursor-pointer transition-all duration-300 hover:scale-[1.02]"
+                    onClick={() => handlePackageSelect(pkg.id)}
+                  >
+                    <GlowCard
+                      glowColor={glowColor}
+                      customSize={true}
+                      className={isSelected ? "ring-2 ring-cyan-400 shadow-2xl" : ""}
+                    >
+                      {pkg.popular && (
+                        <Badge className="absolute -top-2 left-6 bg-white/20 text-white backdrop-blur-sm border border-white/30 z-10">
+                          Most Popular
+                        </Badge>
+                      )}
+
+                      <div className="flex flex-col h-full space-y-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-gradient-to-br from-white/20 to-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm border border-white/30">
+                              <IconComponent className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                              <h4 className="text-xl font-semibold text-white drop-shadow-lg">{pkg.name}</h4>
+                              <p className="text-white/80 text-sm drop-shadow-md">{pkg.description}</p>
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            {pkg.price > 0 ? (
+                              <div className="text-2xl font-bold text-white drop-shadow-lg">{formatCurrency(convertPrice(pkg.price))}</div>
+                            ) : (
+                              <div className="text-lg font-bold text-white/80 drop-shadow-lg">Individual Cost</div>
+                            )}
+                            {pkg.originalPrice && (
+                              <div className="text-sm text-white/60 line-through drop-shadow-md">{formatCurrency(convertPrice(pkg.originalPrice))}</div>
+                            )}
+                          </div>
+                        </div>
+
+                        <ul className="space-y-2 flex-1">
+                          {pkg.features.map((feature, featureIndex) => (
+                            <li key={featureIndex} className="flex items-center space-x-2">
+                              <Check className="w-4 h-4 text-white/80 flex-shrink-0 drop-shadow-md" />
+                              <span className="text-white/90 text-sm drop-shadow-md">{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        {pkg.note && (
+                          <div className="mt-4 p-3 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20">
+                            <p className="text-white/80 text-xs drop-shadow-md italic">
+                              {pkg.note}
+                            </p>
+                          </div>
+                        )}
+
+                        {isSelected && (
+                          <div className="mt-4 p-3 bg-white/20 rounded-lg backdrop-blur-sm border border-white/30">
+                            <div className="text-center text-white font-semibold drop-shadow-lg">
+                              ✓ Selected Package
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </GlowCard>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Registration Form */}
+          <div className="space-y-6">
+            {/* Form Container with White Background */}
+            <div className="bg-white/95 backdrop-blur-md rounded-xl p-8 shadow-2xl border border-white/40">
+              <h3 className="text-2xl font-semibold text-neutral-900 mb-4">Register & Pay Deposit</h3>
+              <div className="bg-gradient-to-r from-emerald-50 to-cyan-50 border border-emerald-200 rounded-lg p-4 mb-6 shadow-sm">
+                <h4 className="font-semibold text-emerald-800 mb-2">What happens next:</h4>
+                <ul className="text-sm text-emerald-700 space-y-1">
+                  <li>• Pay initial deposit of {formatCurrency(convertPrice(100))} per person</li>
+                  <li>• Deposit due: December 1st, 2025</li>
+                  <li>• Deposit will be credited toward accommodation cost</li>
+                  <li>• Food payment schedule details will be sent later</li>
+                  <li>• Individual expenses (travel, activities) are your responsibility</li>
+                </ul>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="firstName">First Name *</Label>
+                  <Input
+                    id="firstName"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange("firstName", e.target.value)}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Input
+                    id="lastName"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange("lastName", e.target.value)}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="email">Email Address *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="phone">Phone Number *</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="adults">Number of Adults</Label>
+                  <Select
+                    value={formData.adults.toString()}
+                    onValueChange={(value) => handleInputChange("adults", Number.parseInt(value))}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6].map((num) => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num} Adult{num > 1 ? "s" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="children">Number of Children</Label>
+                  <Select
+                    value={formData.children.toString()}
+                    onValueChange={(value) => handleInputChange("children", Number.parseInt(value))}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[0, 1, 2, 3, 4, 5, 6].map((num) => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num} Child{num !== 1 ? "ren" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="emergencyContact">Emergency Contact Name</Label>
+                  <Input
+                    id="emergencyContact"
+                    value={formData.emergencyContact}
+                    onChange={(e) => handleInputChange("emergencyContact", e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="emergencyPhone">Emergency Contact Phone</Label>
+                  <Input
+                    id="emergencyPhone"
+                    type="tel"
+                    value={formData.emergencyPhone}
+                    onChange={(e) => handleInputChange("emergencyPhone", e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="specialRequests">Special Requests or Dietary Restrictions</Label>
+                <Textarea
+                  id="specialRequests"
+                  value={formData.specialRequests}
+                  onChange={(e) => handleInputChange("specialRequests", e.target.value)}
+                  placeholder="Please let us know about any dietary restrictions, accessibility needs, or special requests..."
+                  className="mt-1"
+                  rows={3}
+                />
+              </div>
+
+              {selectedPackage === 'deposit' && (
+                <Card className="p-4 bg-orange-50 border-orange-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold text-neutral-900">Initial Deposit Due</h4>
+                      <p className="text-sm text-neutral-600">
+                        {formData.adults + formData.children} person{formData.adults + formData.children > 1 ? "s" : ""} × {formatCurrency(convertPrice(100))}
+                      </p>
+                      <p className="text-xs text-orange-600 mt-1">Due: December 1st, 2025</p>
+                    </div>
+                    <div className="text-2xl font-bold text-orange-600">
+                      {formatCurrency(convertPrice(100 * (formData.adults + formData.children)))}
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {selectedPackage === 'full' && (
+                <Card className="p-4 bg-blue-50 border-blue-200">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-neutral-900">Total Collective Costs</h4>
+                        <p className="text-sm text-neutral-600">
+                          {formData.adults + formData.children} person{formData.adults + formData.children > 1 ? "s" : ""} × {formatCurrency(convertPrice(435))}
+                        </p>
+                      </div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {formatCurrency(convertPrice(435 * (formData.adults + formData.children)))}
+                      </div>
+                    </div>
+                    <p className="text-xs text-blue-600">Includes accommodation + food (deposit will be credited)</p>
+                  </div>
+                </Card>
+              )}
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="terms"
+                  checked={formData.agreeToTerms}
+                  onCheckedChange={(checked) => handleInputChange("agreeToTerms", checked as boolean)}
+                />
+                <Label htmlFor="terms" className="text-sm">
+                  I understand the payment schedule and agree to the reunion terms and conditions *
+                </Label>
+              </div>
+
+              <Button
+                type="submit"
+                size="lg"
+                disabled={!selectedPackage || !formData.agreeToTerms}
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                {selectedPackage === 'test' ? 'Test Payment System' :
+                 selectedPackage === 'deposit' ? 'Register & Pay Deposit' :
+                 selectedPackage === 'full' ? 'Register (Payment Details Later)' :
+                 'Submit Registration'}
+              </Button>
+
+              <div className="text-center">
+                <p className="text-sm text-gray-600">
+                  Questions? Contact us at <a href="mailto:reunion@mahoney2026.com" className="text-blue-600 hover:underline">reunion@mahoney2026.com</a>
+                </p>
+              </div>
+            </form>
+
+            {/* Payment Error */}
+            {paymentError && (
+              <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center">
+                  <XCircle className="w-5 h-5 text-red-500 mr-2" />
+                  <span className="text-red-700">{paymentError}</span>
+                </div>
+              </div>
+            )}
+
+            {/* PayPal Payment Section */}
+            {(() => {
+              const shouldShowPayment = showPayment && (selectedPackage === 'deposit' || selectedPackage === 'test') && !paymentSuccess
+              const paymentAmount = calculateDepositAmount()
+
+              console.log('=== PAYPAL BUTTON RENDERING DEBUG ===')
+              console.log('showPayment:', showPayment)
+              console.log('selectedPackage:', selectedPackage)
+              console.log('paymentSuccess:', paymentSuccess)
+              console.log('shouldShowPayment:', shouldShowPayment)
+              console.log('paymentAmount:', paymentAmount)
+              console.log('paymentAmount type:', typeof paymentAmount)
+              console.log('paymentAmount is valid:', paymentAmount > 0)
+
+              return shouldShowPayment
+            })() && (
+              <div className="mt-8 p-6 bg-gray-50 rounded-xl border border-gray-200">
+                <div className="flex items-center space-x-3 mb-6">
+                  <CreditCard className="w-6 h-6 text-blue-600" />
+                  <h3 className="text-xl font-semibold text-gray-900">Complete Your Payment</h3>
+                </div>
+
+{(() => {
+                  const amount = calculateDepositAmount()
+                  const isDisabled = !formData.firstName || !formData.lastName || !formData.email
+
+                  console.log('=== PAYPAL BUTTON PROPS DEBUG ===')
+                  console.log('PayPal Button amount:', amount)
+                  console.log('PayPal Button currency:', currency)
+                  console.log('PayPal Button disabled:', isDisabled)
+                  console.log('Form data valid:', {
+                    firstName: !!formData.firstName,
+                    lastName: !!formData.lastName,
+                    email: !!formData.email
+                  })
+
+                  return (
+                    <PayPalButton
+                      amount={amount}
+                      currency={currency}
+                      registrationData={{
+                        firstName: formData.firstName,
+                        lastName: formData.lastName,
+                        email: formData.email,
+                        phone: formData.phone,
+                        adults: formData.adults,
+                        children: formData.children,
+                        specialRequests: formData.specialRequests,
+                        emergencyContact: formData.emergencyContact,
+                        emergencyPhone: formData.emergencyPhone,
+                      }}
+                      onSuccess={handlePaymentSuccess}
+                      onError={handlePaymentError}
+                      disabled={isDisabled}
+                    />
+                  )
+                })()}
+              </div>
+            )}
+
+            {/* Success Message */}
+            {paymentSuccess && (
+              <div className="mt-8 p-6 bg-green-50 border border-green-200 rounded-xl">
+                <div className="flex items-center space-x-3 mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                  <h3 className="text-2xl font-semibold text-green-800">Registration Successful! 🎉</h3>
+                </div>
+
+                <div className="space-y-3 text-green-700">
+                  <p className="text-lg">
+                    Thank you for registering for the Mahoney Family Reunion 2026!
+                  </p>
+
+                  {selectedPackage === 'deposit' && (
+                    <div className="bg-green-100 border border-green-300 rounded-lg p-4">
+                      <p className="font-medium">Payment Confirmed</p>
+                      <p className="text-sm">Your deposit has been processed successfully. You will receive a confirmation email shortly.</p>
+                    </div>
+                  )}
+
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Next Steps:</strong></p>
+                    <ul className="list-disc list-inside space-y-1 ml-4">
+                      <li>Check your email for confirmation details</li>
+                      <li>Food payment schedule will be sent soon</li>
+                      <li>Start planning your individual expenses (travel, activities)</li>
+                      <li>Stay tuned for reunion updates and activity details</li>
+                    </ul>
+                  </div>
+
+                  <div className="pt-4">
+                    <Button asChild className="bg-green-600 hover:bg-green-700">
+                      <Link href="/budget">Plan Your Budget</Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            </div>
+            {/* End of white form container */}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
