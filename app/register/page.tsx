@@ -8,7 +8,7 @@ import Image from "next/image"
 
 export default function RegisterPage() {
   return (
-    <PageGuard pageId="register" showComingSoon={true}>
+    <PageGuard pageId="register" showComingSoon={false}>
       <main className="min-h-screen relative overflow-hidden">
         {/* Background Image - Tropical Sunset */}
         <div className="fixed inset-0 z-0 w-full h-full">

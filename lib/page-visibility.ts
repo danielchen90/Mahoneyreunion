@@ -33,7 +33,7 @@ export const DEFAULT_PAGE_VISIBILITY: PageConfig[] = [
     name: 'Schedule',
     path: '/schedule',
     description: 'Event schedule and itinerary',
-    isVisible: false, // HIDDEN - Coming Soon page
+    isVisible: true, // ENABLED - Schedule is now available
   },
   {
     id: 'travel',
@@ -54,7 +54,7 @@ export const DEFAULT_PAGE_VISIBILITY: PageConfig[] = [
     name: 'Register',
     path: '/register',
     description: 'Registration form and payment options',
-    isVisible: false, // HIDDEN - Most important to hide
+    isVisible: true, // ENABLED - Registration is now live with quantity selector
   },
   {
     id: 'faq',
