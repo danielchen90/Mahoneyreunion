@@ -5,33 +5,47 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { logout, getSessionTimeRemaining } from "@/lib/admin-auth"
-import { 
-  getPageVisibility, 
-  togglePageVisibility, 
+import {
+  getPageVisibility,
+  togglePageVisibility,
   resetPageVisibility,
-  type PageConfig 
+  type PageConfig
 } from "@/lib/page-visibility"
-import { 
-  Settings, 
-  LogOut, 
-  Eye, 
-  EyeOff, 
-  RefreshCw, 
+import {
+  Settings,
+  LogOut,
+  Eye,
+  EyeOff,
+  RefreshCw,
   Clock,
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  Shield
+  Shield,
+  Mail,
+  LayoutDashboard,
+  Users,
+  CheckSquare,
+  FileText,
+  FolderOpen
 } from "lucide-react"
+import AdminContactMessages from "@/components/admin-contact-messages"
+import AdminUsers from "@/components/admin-users"
+import AdminTasks from "@/components/admin-tasks"
+import AdminMeetings from "@/components/admin-meetings"
+import AdminFiles from "@/components/admin-files"
 
 interface AdminDashboardProps {
   onLogout: () => void
 }
 
+type TabType = 'overview' | 'messages' | 'users' | 'tasks' | 'meetings' | 'files'
+
 export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [pages, setPages] = useState<PageConfig[]>([])
   const [sessionTime, setSessionTime] = useState(0)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [activeTab, setActiveTab] = useState<TabType>('overview')
 
   useEffect(() => {
     // Load page visibility on mount
@@ -88,12 +102,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     Admin Dashboard
                   </h1>
                   <p className="text-white/80 drop-shadow-md text-sm">
-                    Manage page visibility for the reunion website
+                    Manage your reunion website
                   </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
               {/* Session Time */}
               <div className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/30 rounded-lg">
@@ -102,7 +116,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   {sessionTime}m left
                 </span>
               </div>
-              
+
               {/* Logout Button */}
               <Button
                 onClick={handleLogout}
@@ -117,47 +131,124 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         </Card>
       </div>
 
-      {/* Stats */}
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
-        <Card className="p-6 bg-white/10 backdrop-blur-md border border-white/30 shadow-xl">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-green-500/30 backdrop-blur-sm rounded-lg border border-green-400/40">
-              <Eye className="w-6 h-6 text-green-300 drop-shadow-lg" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-white drop-shadow-lg">{visibleCount}</p>
-              <p className="text-sm text-white/80 drop-shadow-md">Visible Pages</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-white/10 backdrop-blur-md border border-white/30 shadow-xl">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-orange-500/30 backdrop-blur-sm rounded-lg border border-orange-400/40">
-              <EyeOff className="w-6 h-6 text-orange-300 drop-shadow-lg" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-white drop-shadow-lg">{hiddenCount}</p>
-              <p className="text-sm text-white/80 drop-shadow-md">Hidden Pages</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-white/10 backdrop-blur-md border border-white/30 shadow-xl">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-blue-500/30 backdrop-blur-sm rounded-lg border border-blue-400/40">
-              <Shield className="w-6 h-6 text-cyan-300 drop-shadow-lg" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-white drop-shadow-lg">{pages.length}</p>
-              <p className="text-sm text-white/80 drop-shadow-md">Total Pages</p>
-            </div>
+      {/* Tabs */}
+      <div className="mb-8">
+        <Card className="p-2 bg-white/10 backdrop-blur-md border border-white/30 shadow-xl">
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setActiveTab('overview')}
+              variant={activeTab === 'overview' ? 'default' : 'ghost'}
+              className={activeTab === 'overview'
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+              }
+            >
+              <LayoutDashboard className="w-4 h-4 mr-2" />
+              Overview
+            </Button>
+            <Button
+              onClick={() => setActiveTab('messages')}
+              variant={activeTab === 'messages' ? 'default' : 'ghost'}
+              className={activeTab === 'messages'
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+              }
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Contact Messages
+            </Button>
+            <Button
+              onClick={() => setActiveTab('users')}
+              variant={activeTab === 'users' ? 'default' : 'ghost'}
+              className={activeTab === 'users'
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+              }
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Users
+            </Button>
+            <Button
+              onClick={() => setActiveTab('tasks')}
+              variant={activeTab === 'tasks' ? 'default' : 'ghost'}
+              className={activeTab === 'tasks'
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+              }
+            >
+              <CheckSquare className="w-4 h-4 mr-2" />
+              Tasks
+            </Button>
+            <Button
+              onClick={() => setActiveTab('meetings')}
+              variant={activeTab === 'meetings' ? 'default' : 'ghost'}
+              className={activeTab === 'meetings'
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+              }
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Meetings
+            </Button>
+            <Button
+              onClick={() => setActiveTab('files')}
+              variant={activeTab === 'files' ? 'default' : 'ghost'}
+              className={activeTab === 'files'
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+              }
+            >
+              <FolderOpen className="w-4 h-4 mr-2" />
+              Files
+            </Button>
           </div>
         </Card>
       </div>
 
-      {/* Page Visibility Controls */}
-      <Card className="p-6 bg-white/10 backdrop-blur-md border border-white/30 shadow-xl mb-6">
+      {/* Tab Content */}
+      {activeTab === 'overview' && (
+        <>
+          {/* Stats */}
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <Card className="p-6 bg-white/10 backdrop-blur-md border border-white/30 shadow-xl">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-green-500/30 backdrop-blur-sm rounded-lg border border-green-400/40">
+                  <Eye className="w-6 h-6 text-green-300 drop-shadow-lg" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white drop-shadow-lg">{visibleCount}</p>
+                  <p className="text-sm text-white/80 drop-shadow-md">Visible Pages</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-white/10 backdrop-blur-md border border-white/30 shadow-xl">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-orange-500/30 backdrop-blur-sm rounded-lg border border-orange-400/40">
+                  <EyeOff className="w-6 h-6 text-orange-300 drop-shadow-lg" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white drop-shadow-lg">{hiddenCount}</p>
+                  <p className="text-sm text-white/80 drop-shadow-md">Hidden Pages</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-white/10 backdrop-blur-md border border-white/30 shadow-xl">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-blue-500/30 backdrop-blur-sm rounded-lg border border-blue-400/40">
+                  <Shield className="w-6 h-6 text-cyan-300 drop-shadow-lg" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white drop-shadow-lg">{pages.length}</p>
+                  <p className="text-sm text-white/80 drop-shadow-md">Total Pages</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Page Visibility Controls */}
+          <Card className="p-6 bg-white/10 backdrop-blur-md border border-white/30 shadow-xl mb-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white drop-shadow-lg">
             Page Visibility Controls
@@ -250,6 +341,33 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           ))}
         </div>
       </Card>
+        </>
+      )}
+
+      {/* Messages Tab */}
+      {activeTab === 'messages' && (
+        <AdminContactMessages />
+      )}
+
+      {/* Users Tab */}
+      {activeTab === 'users' && (
+        <AdminUsers />
+      )}
+
+      {/* Tasks Tab */}
+      {activeTab === 'tasks' && (
+        <AdminTasks />
+      )}
+
+      {/* Meetings Tab */}
+      {activeTab === 'meetings' && (
+        <AdminMeetings />
+      )}
+
+      {/* Files Tab */}
+      {activeTab === 'files' && (
+        <AdminFiles />
+      )}
 
       {/* Reset Confirmation Modal */}
       {showResetConfirm && (

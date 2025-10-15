@@ -60,7 +60,7 @@ export default function BudgetCalculatorSection() {
   }
 
   const travelOptions = [
-    { id: "flying", name: "Flying to Orlando", basePrice: 600, description: "Round-trip flight from Canada + airport transfer" },
+    { id: "flying", name: "Flying to Orlando", basePrice: 400, description: "Round-trip flight from Canada + airport transfer" },
     { id: "driving", name: "Driving", basePrice: 400, description: "Gas, tolls, and parking for reunion duration" },
     { id: "train", name: "Train/Bus", basePrice: 300, description: "Train/bus ticket + local transport" }
   ]
@@ -276,6 +276,26 @@ export default function BudgetCalculatorSection() {
                               <span className="text-lg font-semibold text-white drop-shadow-lg">{formatCurrency(convertPrice(collectiveCosts.accommodation))}/person</span>
                             </div>
                             <p className="text-sm text-white/90 drop-shadow-md">Shared Airbnb for the entire reunion duration</p>
+                          </div>
+
+                          {/* Accommodation Cost Disclaimer */}
+                          <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-2 border-amber-400/60 rounded-lg p-4 shadow-lg backdrop-blur-sm">
+                            <div className="flex items-start space-x-3">
+                              <div className="flex-shrink-0 mt-0.5">
+                                <svg className="w-6 h-6 text-amber-300" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-amber-100 mb-2 drop-shadow-md">Important: Accommodation Cost Notice</h4>
+                                <p className="text-sm text-white/95 leading-relaxed drop-shadow-md">
+                                  Current accommodation costs are calculated based on <strong>20-person attendance</strong>. If fewer family members register, the cost per person will increase proportionally. This is why <strong>early registration is essential</strong> - it helps us provide accurate final pricing and ensures the best rates for everyone.
+                                </p>
+                                <p className="text-sm text-amber-100 mt-2 font-medium drop-shadow-md">
+                                  💡 We encourage timely registration to lock in these projected costs and avoid last-minute price adjustments.
+                                </p>
+                              </div>
+                            </div>
                           </div>
 
                           <div className="bg-gradient-to-r from-blue-500 to-indigo-500 border-2 border-blue-400/50 rounded-lg p-4 shadow-lg">

@@ -1,13 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { GlowCard } from "@/components/glow-card"
 import {
-  Heart, Camera, Music, Utensils, Palmtree, Gift, Sun, Waves, MapPin, ExternalLink,
-  Home, Bed, Bath, Users, Wifi, Car, Wind, Tv, UtensilsCrossed, Dumbbell,
-  Gamepad2, Baby, Snowflake, Shirt, ChevronLeft, ChevronRight
+  ExternalLink, Bed, Bath, Users, Home, Wifi, Car, Wind, Tv, UtensilsCrossed,
+  Dumbbell, Gamepad2, Baby, Snowflake, Shirt, Sun, Waves, Palmtree
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -18,8 +16,9 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
+import RegistrationCTA from "@/components/registration-cta"
 
-export default function AboutSection() {
+export default function HomeContent() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   // Property photos - Actual VRBO property images (served from /public/property-photos/)
@@ -114,95 +113,41 @@ export default function AboutSection() {
     { icon: Palmtree, name: "Resort Amenities", description: "Full resort access" },
   ]
 
-  const activities = [
-    {
-      icon: Heart,
-      title: "Family Stories",
-      description: "Share memories and create new ones with storytelling sessions under the Florida sunshine.",
-    },
-    {
-      icon: Camera,
-      title: "Photo Sessions",
-      description: "Professional family portraits with tropical backdrops and resort scenery to capture every precious moment.",
-    },
-    {
-      icon: Music,
-      title: "Live Entertainment",
-      description: "Live music, dancing, and poolside entertainment for all ages throughout our Florida celebration.",
-    },
-    {
-      icon: Utensils,
-      title: "Resort Dining",
-      description: "Gourmet dining experiences featuring family recipes and delicious Florida specialties at Solterra Resort.",
-    },
-    {
-      icon: Waves,
-      title: "Pool & Water Activities",
-      description: "Resort pools, water slides, and aquatic fun for the whole family in the Orlando sunshine.",
-    },
-    {
-      icon: Sun,
-      title: "Orlando Adventures",
-      description: "Explore nearby attractions, theme parks, and enjoy the magic of Orlando together as a family.",
-    },
-  ]
-
   return (
-    <section id="about" className="py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Location Banner - Updated for glassmorphism */}
-        <div className="text-center mb-12 bg-white/10 backdrop-blur-md rounded-2xl p-8 shadow-xl border border-white/30">
-          <div className="flex items-center justify-center mb-4">
-            <MapPin className="w-8 h-8 text-orange-300 mr-3 drop-shadow-lg" />
-            <h2 className="text-3xl font-bold text-white drop-shadow-lg">
-              <span className="bg-gradient-to-r from-orange-300 via-amber-200 to-orange-300 bg-clip-text text-transparent">
-                Orlando, Florida
-              </span>
-            </h2>
-          </div>
-          <div className="text-2xl font-semibold text-white mb-2 drop-shadow-lg">Solterra Resort</div>
-          <p className="text-lg text-white/90 drop-shadow-md">A Tropical Paradise for Our Family Celebration</p>
-        </div>
+    <div className="relative min-h-screen">
+      {/* Fixed Background Image */}
+      <div className="fixed inset-0 z-0 w-full h-full">
+        <Image
+          src="/tropical-palm-trees-sunset-beach-florida-resort-pa.jpg"
+          alt="Tropical Background"
+          fill
+          className="object-cover"
+          style={{
+            objectFit: 'cover',
+            objectPosition: 'center',
+          }}
+          priority
+        />
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-black/10" />
+      </div>
 
+      {/* Content Container */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        
+        {/* Hero Text */}
         <div className="text-center mb-16 bg-white/10 backdrop-blur-md rounded-2xl p-8 shadow-xl border border-white/30">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 drop-shadow-lg">About the Reunion</h2>
-          <p className="text-xl text-white/90 max-w-3xl mx-auto text-pretty leading-relaxed drop-shadow-md">
-            Six days of tropical celebration, connection, and creating lasting memories with the entire Mahoney family.
-            Join us in beautiful Orlando, Florida for an unforgettable resort experience filled with sunshine, love, laughter, and togetherness.
-          </p>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
+            Mahoney Family Reunion
+          </h1>
+          <p className="text-2xl text-white/90 mb-2 drop-shadow-md">July 29 - August 3, 2026</p>
+          <p className="text-xl text-white/80 drop-shadow-md">Orlando, Florida • Solterra Resort</p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16 justify-items-center">
-          {activities.map((activity, index) => {
-            const IconComponent = activity.icon
-            const glowColors = ['blue', 'purple', 'green', 'orange', 'red'] as const
-            const glowColor = glowColors[index % glowColors.length]
-
-            return (
-              <GlowCard
-                key={index}
-                glowColor={glowColor}
-                size="md"
-                className="text-center hover:scale-105 transition-transform duration-300"
-              >
-                <div className="flex flex-col items-center justify-center h-full space-y-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-white/20 to-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
-                    <IconComponent className="w-8 h-8 text-white" />
-                  </div>
-                  <div className="space-y-3">
-                    <h3 className="text-xl font-semibold text-white drop-shadow-lg">{activity.title}</h3>
-                    <p className="text-white/80 text-sm leading-relaxed drop-shadow-md">{activity.description}</p>
-                  </div>
-                </div>
-              </GlowCard>
-            )
-          })}
-        </div>
-
-        {/* Property Information Section */}
+        {/* 1. Our Reunion Property Section (TOP PRIORITY) */}
         <div className="mb-16">
           <div className="text-center mb-12 bg-white/10 backdrop-blur-md rounded-2xl p-8 shadow-xl border border-white/30">
-            <h3 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">Our Reunion Property</h3>
+            <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">Our Reunion Property</h2>
             <p className="text-white/90 max-w-2xl mx-auto mb-8 drop-shadow-md">
               Experience the perfect blend of luxury and family fun at this premier Orlando resort villa, just minutes from world-famous attractions.
             </p>
@@ -311,10 +256,12 @@ export default function AboutSection() {
               </Button>
             </Link>
           </div>
+        </div>
 
-          {/* Amenities Section */}
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 shadow-xl border border-white/30 mb-8">
-            <h4 className="text-2xl font-bold text-white mb-6 text-center drop-shadow-lg">Property Amenities</h4>
+        {/* 2. Amenities Section */}
+        <div className="mb-16">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 shadow-xl border border-white/30">
+            <h2 className="text-3xl font-bold text-white mb-6 text-center drop-shadow-lg">Property Amenities</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {amenities.map((amenity, index) => {
                 const IconComponent = amenity.icon
@@ -331,60 +278,66 @@ export default function AboutSection() {
               })}
             </div>
           </div>
+        </div>
 
-          {/* Resort Highlights */}
-          <div className="grid md:grid-cols-3 gap-8 justify-items-center">
-            <GlowCard
-              glowColor="blue"
-              size="md"
-              className="text-center hover:scale-105 transition-transform duration-300"
-            >
-              <div className="flex flex-col items-center justify-center h-full space-y-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-white/20 to-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
-                  <Waves className="w-8 h-8 text-white" />
-                </div>
-                <div className="space-y-3">
-                  <h4 className="text-xl font-semibold text-white drop-shadow-lg">Resort Pools & Waterpark</h4>
-                  <p className="text-white/80 text-sm leading-relaxed drop-shadow-md">Multiple pools, water slides, lazy river, and aquatic fun for all ages</p>
-                </div>
-              </div>
-            </GlowCard>
+        {/* 3. Registration CTA */}
+        <div className="mb-16">
+          <RegistrationCTA />
+        </div>
 
-            <GlowCard
-              glowColor="orange"
-              size="md"
-              className="text-center hover:scale-105 transition-transform duration-300"
-            >
-              <div className="flex flex-col items-center justify-center h-full space-y-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-white/20 to-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
-                  <Sun className="w-8 h-8 text-white" />
-                </div>
-                <div className="space-y-3">
-                  <h4 className="text-xl font-semibold text-white drop-shadow-lg">Prime Orlando Location</h4>
-                  <p className="text-white/80 text-sm leading-relaxed drop-shadow-md">15 minutes to Disney World, 20 minutes to Universal Studios</p>
-                </div>
+        {/* Resort Highlights */}
+        <div className="grid md:grid-cols-3 gap-8 justify-items-center">
+          <GlowCard
+            glowColor="blue"
+            size="md"
+            className="text-center hover:scale-105 transition-transform duration-300"
+          >
+            <div className="flex flex-col items-center justify-center h-full space-y-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-white/20 to-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
+                <Waves className="w-8 h-8 text-white" />
               </div>
-            </GlowCard>
+              <div className="space-y-3">
+                <h4 className="text-xl font-semibold text-white drop-shadow-lg">Resort Pools & Waterpark</h4>
+                <p className="text-white/80 text-sm leading-relaxed drop-shadow-md">Multiple pools, water slides, lazy river, and aquatic fun for all ages</p>
+              </div>
+            </div>
+          </GlowCard>
 
-            <GlowCard
-              glowColor="green"
-              size="md"
-              className="text-center hover:scale-105 transition-transform duration-300"
-            >
-              <div className="flex flex-col items-center justify-center h-full space-y-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-white/20 to-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
-                  <Palmtree className="w-8 h-8 text-white" />
-                </div>
-                <div className="space-y-3">
-                  <h4 className="text-xl font-semibold text-white drop-shadow-lg">Tropical Paradise</h4>
-                  <p className="text-white/80 text-sm leading-relaxed drop-shadow-md">Beautiful landscaping, Florida sunshine, and resort-style living</p>
-                </div>
+          <GlowCard
+            glowColor="orange"
+            size="md"
+            className="text-center hover:scale-105 transition-transform duration-300"
+          >
+            <div className="flex flex-col items-center justify-center h-full space-y-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-white/20 to-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
+                <Sun className="w-8 h-8 text-white" />
               </div>
-            </GlowCard>
-          </div>
+              <div className="space-y-3">
+                <h4 className="text-xl font-semibold text-white drop-shadow-lg">Prime Orlando Location</h4>
+                <p className="text-white/80 text-sm leading-relaxed drop-shadow-md">15 minutes to Disney World, 20 minutes to Universal Studios</p>
+              </div>
+            </div>
+          </GlowCard>
+
+          <GlowCard
+            glowColor="green"
+            size="md"
+            className="text-center hover:scale-105 transition-transform duration-300"
+          >
+            <div className="flex flex-col items-center justify-center h-full space-y-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-white/20 to-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
+                <Palmtree className="w-8 h-8 text-white" />
+              </div>
+              <div className="space-y-3">
+                <h4 className="text-xl font-semibold text-white drop-shadow-lg">Tropical Paradise</h4>
+                <p className="text-white/80 text-sm leading-relaxed drop-shadow-md">Beautiful landscaping, Florida sunshine, and resort-style living</p>
+              </div>
+            </div>
+          </GlowCard>
         </div>
 
       </div>
-    </section>
+    </div>
   )
 }
+

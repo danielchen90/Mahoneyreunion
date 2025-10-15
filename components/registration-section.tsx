@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { GlowCard } from "@/components/glow-card"
 import { Input } from "@/components/ui/input"
@@ -8,13 +8,15 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar, Star, Users, CreditCard, CheckCircle2 } from "lucide-react"
 
-interface RegistrationForm {
-  firstName: string
-  lastName: string
+interface AttendeeInfo {
+  fullName: string
   email: string
   phone: string
-  adults: number
-  children: number
+}
+
+interface RegistrationForm {
+  quantity: number
+  attendees: AttendeeInfo[]
   specialRequests: string
   emergencyContact: string
   emergencyPhone: string
@@ -22,40 +24,36 @@ interface RegistrationForm {
 }
 
 export default function RegistrationSection() {
-  const [selectedPackage, setSelectedPackage] = useState<string>("")
+  const [selectedPackage, setSelectedPackage] = useState<string>("deposit") // Auto-select deposit
   const [currency, setCurrency] = useState<'CAD' | 'USD'>('CAD')
   const [formData, setFormData] = useState<RegistrationForm>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    adults: 1,
-    children: 0,
+    quantity: 1,
+    attendees: [{ fullName: "", email: "", phone: "" }],
     specialRequests: "",
     emergencyContact: "",
     emergencyPhone: "",
     agreeToTerms: false,
   })
 
-  // Only show deposit and full payment packages (hide test package)
+  // Only show deposit package (hide full payment temporarily)
   const packages = [
     {
       id: "deposit",
-      name: "Initial Deposit",
+      name: "$100 Deposit",
       price: 100,
       features: ["Secure your spot", "Pay balance later", "Flexible payment options"],
       icon: Calendar,
       popular: true,
     },
-    {
-      id: "full",
-      name: "Full Collective Costs",
-      price: 435,
-      features: ["Complete payment", "All activities included", "Best value"],
-      icon: Star,
-      popular: false,
-    },
   ]
+
+  // Update attendees array when quantity changes
+  useEffect(() => {
+    const newAttendees = Array.from({ length: formData.quantity }, (_, index) => {
+      return formData.attendees[index] || { fullName: "", email: "", phone: "" }
+    })
+    setFormData(prev => ({ ...prev, attendees: newAttendees }))
+  }, [formData.quantity])
 
   const convertPrice = (priceCAD: number) => {
     if (currency === 'USD') {
@@ -72,7 +70,16 @@ export default function RegistrationSection() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  const handleAttendeeChange = (index: number, field: keyof AttendeeInfo, value: string) => {
+    setFormData(prev => {
+      const newAttendees = [...prev.attendees]
+      newAttendees[index] = { ...newAttendees[index], [field]: value }
+      return { ...prev, attendees: newAttendees }
+    })
+  }
+
   const selectedPkg = packages.find(pkg => pkg.id === selectedPackage)
+  const totalDeposit = selectedPkg ? convertPrice(selectedPkg.price) * formData.quantity : 0
 
   return (
     <div id="registration" className="py-20 relative">
@@ -117,71 +124,55 @@ export default function RegistrationSection() {
           </div>
         </div>
 
-        {/* Package Selection - 3 Column Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          {packages.map((pkg, index) => {
+        {/* Payment Option - Single Deposit Package */}
+        <div className="max-w-2xl mx-auto mb-12">
+          {packages.map((pkg) => {
             const IconComponent = pkg.icon
             const isSelected = selectedPackage === pkg.id
-            const glowColors = ['purple', 'orange'] as const
-            const glowColor = glowColors[index % glowColors.length]
 
             return (
-              <div
-                key={pkg.id}
-                className="relative cursor-pointer transition-all duration-300 hover:scale-[1.02]"
-                onClick={() => handlePackageSelect(pkg.id)}
-              >
+              <div key={pkg.id} className="relative">
                 <GlowCard
-                  glowColor={glowColor}
+                  glowColor="purple"
                   customSize={true}
-                  className={`relative ${
-                    isSelected
-                      ? "ring-4 ring-cyan-400 shadow-2xl shadow-cyan-500/50"
-                      : "ring-1 ring-white/20"
-                  }`}
+                  className="relative ring-4 ring-cyan-400 shadow-2xl shadow-cyan-500/50"
                 >
                   {/* Selected Badge - Top Right */}
-                  {isSelected && (
-                    <div className="absolute -top-3 -right-3 z-20">
-                      <div className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-pulse">
-                        <CheckCircle2 className="w-5 h-5" />
-                        <span className="font-bold text-sm">SELECTED</span>
-                      </div>
+                  <div className="absolute -top-3 -right-3 z-20">
+                    <div className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-pulse">
+                      <CheckCircle2 className="w-5 h-5" />
+                      <span className="font-bold text-sm">SELECTED</span>
                     </div>
-                  )}
+                  </div>
 
-                  <div className={`p-6 ${isSelected ? 'bg-cyan-500/10' : ''} transition-colors duration-300`}>
+                  <div className="p-8 bg-cyan-500/10 transition-colors duration-300">
                     <div className="flex flex-col items-center text-center">
                       {/* Icon */}
-                      <div className={`p-4 rounded-xl mb-4 ${
-                        glowColor === 'purple' ? 'bg-purple-500/20' : 'bg-orange-500/20'
-                      }`}>
-                        <IconComponent className="w-8 h-8 text-white" />
+                      <div className="p-4 rounded-xl mb-4 bg-purple-500/20">
+                        <IconComponent className="w-10 h-10 text-white" />
                       </div>
 
                       {/* Package Name */}
                       <div className="mb-3">
-                        <h3 className="text-2xl font-bold text-white mb-1">{pkg.name}</h3>
-                        {pkg.popular && (
-                          <span className="inline-block px-3 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs font-semibold rounded-full">
-                            POPULAR CHOICE
-                          </span>
-                        )}
+                        <h3 className="text-3xl font-bold text-white mb-2">{pkg.name}</h3>
+                        <span className="inline-block px-4 py-1.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-semibold rounded-full">
+                          SECURE YOUR SPOT
+                        </span>
                       </div>
 
                       {/* Price */}
                       <div className="mb-6">
-                        <p className="text-4xl font-bold text-white">
+                        <p className="text-5xl font-bold text-white">
                           {currency === 'CAD' ? 'CAD' : 'USD'} ${convertPrice(pkg.price).toFixed(2)}
                         </p>
-                        <span className="text-sm text-white/70">per person</span>
+                        <span className="text-base text-white/70">per person</span>
                       </div>
 
                       {/* Features */}
-                      <ul className="space-y-3 w-full">
+                      <ul className="space-y-3 w-full max-w-md">
                         {pkg.features.map((feature, idx) => (
-                          <li key={idx} className="flex items-center text-white/90 text-sm">
-                            <svg className="w-5 h-5 mr-2 text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <li key={idx} className="flex items-center text-white/90 text-base">
+                            <svg className="w-6 h-6 mr-3 text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             <span>{feature}</span>
@@ -189,18 +180,13 @@ export default function RegistrationSection() {
                         ))}
                       </ul>
 
-                      {/* Select Button */}
-                      {!isSelected && (
-                        <Button
-                          className="mt-6 w-full bg-white/20 hover:bg-white/30 text-white border border-white/30"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handlePackageSelect(pkg.id)
-                          }}
-                        >
-                          Select Package
-                        </Button>
-                      )}
+                      {/* Note about full payment */}
+                      <div className="mt-6 p-4 bg-white/10 rounded-lg border border-white/20">
+                        <p className="text-sm text-white/80">
+                          <strong>Note:</strong> Full payment options will be available once final costs are confirmed.
+                          This deposit secures your spot for the reunion.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </GlowCard>
@@ -209,127 +195,140 @@ export default function RegistrationSection() {
           })}
         </div>
 
-        {/* Registration Form - Only shown after package selection */}
+        {/* Registration Form - Always shown since deposit is auto-selected */}
         {selectedPackage && selectedPkg && (
           <div className="bg-white/15 backdrop-blur-md rounded-2xl shadow-2xl p-8 md:p-10 border border-white/30">
-            {/* Selected Package Summary */}
+            {/* Selected Package Summary with Total */}
             <div className="mb-8 p-6 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 backdrop-blur-sm rounded-xl border-2 border-cyan-400/40">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
-                  <p className="text-sm text-white/80 mb-1 drop-shadow-md">Selected Package</p>
+                  <p className="text-sm text-white/80 mb-1 drop-shadow-md">Payment Option</p>
                   <h3 className="text-2xl font-bold text-white drop-shadow-lg">{selectedPkg.name}</h3>
+                  <p className="text-sm text-white/70 mt-1">
+                    {currency === 'CAD' ? 'CAD' : 'USD'} ${convertPrice(selectedPkg.price).toFixed(2)} per person
+                  </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-white/80 mb-1 drop-shadow-md">Amount</p>
-                  <p className="text-3xl font-bold text-cyan-300 drop-shadow-lg">
-                    {currency === 'CAD' ? 'CAD' : 'USD'} ${convertPrice(selectedPkg.price).toFixed(2)}
+                  <p className="text-sm text-white/80 mb-1 drop-shadow-md">Total Deposit</p>
+                  <p className="text-4xl font-bold text-cyan-300 drop-shadow-lg">
+                    {currency === 'CAD' ? 'CAD' : 'USD'} ${totalDeposit.toFixed(2)}
                   </p>
-                  <p className="text-xs text-white/70 drop-shadow-sm">per person</p>
+                  <p className="text-xs text-white/70 drop-shadow-sm">
+                    {formData.quantity} {formData.quantity === 1 ? 'person' : 'people'}
+                  </p>
                 </div>
               </div>
             </div>
 
             <h3 className="text-2xl font-bold text-white mb-6 drop-shadow-lg">Registration Information</h3>
 
-            <div className="space-y-6">
-              {/* Personal Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="firstName" className="text-gray-700">First Name *</Label>
-                  <Input
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={(e) => handleInputChange('firstName', e.target.value)}
-                    className="mt-1"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="lastName" className="text-gray-700">Last Name *</Label>
-                  <Input
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange('lastName', e.target.value)}
-                    className="mt-1"
-                    required
-                  />
-                </div>
+            <div className="space-y-8">
+              {/* Quantity Selector */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                <Label htmlFor="quantity" className="text-white text-lg font-semibold mb-3 block drop-shadow-md">
+                  Number of People to Register *
+                </Label>
+                <select
+                  id="quantity"
+                  value={formData.quantity}
+                  onChange={(e) => handleInputChange('quantity', parseInt(e.target.value))}
+                  className="w-full md:w-64 px-4 py-3 rounded-lg bg-white/90 border-2 border-cyan-400/50 text-gray-900 font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                  required
+                >
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                    <option key={num} value={num}>
+                      {num} {num === 1 ? 'Person' : 'People'}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-sm text-white/70 mt-2 drop-shadow-sm">
+                  Select how many people you're registering for this reunion
+                </p>
               </div>
+              {/* Dynamic Attendee Information Fields */}
+              {formData.attendees.map((attendee, index) => (
+                <div
+                  key={index}
+                  className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 space-y-4"
+                >
+                  <h4 className="text-xl font-bold text-white mb-4 drop-shadow-lg flex items-center gap-2">
+                    <Users className="w-5 h-5 text-cyan-400" />
+                    Person {index + 1} Information
+                  </h4>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="email" className="text-gray-700">Email Address *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="mt-1"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone" className="text-gray-700">Phone Number *</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className="mt-1"
-                    required
-                  />
-                </div>
-              </div>
+                  <div>
+                    <Label htmlFor={`fullName-${index}`} className="text-white font-medium drop-shadow-md">
+                      Full Name *
+                    </Label>
+                    <Input
+                      id={`fullName-${index}`}
+                      value={attendee.fullName}
+                      onChange={(e) => handleAttendeeChange(index, 'fullName', e.target.value)}
+                      className="mt-2 bg-white/90 border-cyan-400/50 focus:border-cyan-500"
+                      placeholder="Enter full name"
+                      required
+                    />
+                  </div>
 
-              {/* Number of Attendees */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="adults" className="text-gray-700">Number of Adults *</Label>
-                  <Input
-                    id="adults"
-                    type="number"
-                    min="1"
-                    value={formData.adults}
-                    onChange={(e) => handleInputChange('adults', parseInt(e.target.value) || 1)}
-                    className="mt-1"
-                    required
-                  />
+                  <div>
+                    <Label htmlFor={`email-${index}`} className="text-white font-medium drop-shadow-md">
+                      Email Address *
+                    </Label>
+                    <Input
+                      id={`email-${index}`}
+                      type="email"
+                      value={attendee.email}
+                      onChange={(e) => handleAttendeeChange(index, 'email', e.target.value)}
+                      className="mt-2 bg-white/90 border-cyan-400/50 focus:border-cyan-500"
+                      placeholder="email@example.com"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor={`phone-${index}`} className="text-white font-medium drop-shadow-md">
+                      Phone Number (Optional)
+                    </Label>
+                    <Input
+                      id={`phone-${index}`}
+                      type="tel"
+                      value={attendee.phone}
+                      onChange={(e) => handleAttendeeChange(index, 'phone', e.target.value)}
+                      className="mt-2 bg-white/90 border-cyan-400/50 focus:border-cyan-500"
+                      placeholder="(123) 456-7890"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="children" className="text-gray-700">Number of Children</Label>
-                  <Input
-                    id="children"
-                    type="number"
-                    min="0"
-                    value={formData.children}
-                    onChange={(e) => handleInputChange('children', parseInt(e.target.value) || 0)}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
+              ))}
 
               {/* Emergency Contact */}
-              <div className="pt-6 border-t border-gray-200">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Emergency Contact</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 space-y-4">
+                <h4 className="text-xl font-bold text-white mb-4 drop-shadow-lg">Emergency Contact</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="emergencyContact" className="text-gray-700">Contact Name *</Label>
+                    <Label htmlFor="emergencyContact" className="text-white font-medium drop-shadow-md">
+                      Contact Name *
+                    </Label>
                     <Input
                       id="emergencyContact"
                       value={formData.emergencyContact}
                       onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
-                      className="mt-1"
+                      className="mt-2 bg-white/90 border-cyan-400/50 focus:border-cyan-500"
+                      placeholder="Emergency contact name"
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="emergencyPhone" className="text-gray-700">Contact Phone *</Label>
+                    <Label htmlFor="emergencyPhone" className="text-white font-medium drop-shadow-md">
+                      Contact Phone *
+                    </Label>
                     <Input
                       id="emergencyPhone"
                       type="tel"
                       value={formData.emergencyPhone}
                       onChange={(e) => handleInputChange('emergencyPhone', e.target.value)}
-                      className="mt-1"
+                      className="mt-2 bg-white/90 border-cyan-400/50 focus:border-cyan-500"
+                      placeholder="Emergency contact phone"
                       required
                     />
                   </div>
@@ -337,65 +336,68 @@ export default function RegistrationSection() {
               </div>
 
               {/* Special Requests */}
-              <div>
-                <Label htmlFor="specialRequests" className="text-gray-700">Special Requests or Dietary Requirements</Label>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                <Label htmlFor="specialRequests" className="text-white font-medium drop-shadow-md text-lg mb-3 block">
+                  Special Requests or Dietary Requirements
+                </Label>
                 <Textarea
                   id="specialRequests"
                   value={formData.specialRequests}
                   onChange={(e) => handleInputChange('specialRequests', e.target.value)}
-                  className="mt-1"
+                  className="mt-2 bg-white/90 border-cyan-400/50 focus:border-cyan-500"
                   rows={4}
                   placeholder="Please let us know about any dietary restrictions, accessibility needs, or special requests..."
                 />
               </div>
 
-              {/* Terms and Conditions */}
-              <div className="flex items-start space-x-3 pt-4">
-                <input
-                  type="checkbox"
-                  id="agreeToTerms"
-                  checked={formData.agreeToTerms}
-                  onChange={(e) => handleInputChange('agreeToTerms', e.target.checked)}
-                  className="mt-1 h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded"
-                />
-                <Label htmlFor="agreeToTerms" className="text-sm text-gray-700 cursor-pointer">
-                  I agree to the terms and conditions and understand that this payment is non-refundable. I confirm that all information provided is accurate.
-                </Label>
-              </div>
-
               {/* Total Amount Display */}
-              <div className="bg-gray-50 rounded-lg p-6 border-2 border-gray-200">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-700">Package Price (per person):</span>
-                  <span className="font-semibold text-gray-900">
+              <div className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 backdrop-blur-sm rounded-xl p-6 border-2 border-cyan-400/40">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-white/90 text-lg drop-shadow-md">Deposit per person:</span>
+                  <span className="font-semibold text-white text-lg drop-shadow-md">
                     {currency === 'CAD' ? 'CAD' : 'USD'} ${convertPrice(selectedPkg.price).toFixed(2)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-700">Number of People:</span>
-                  <span className="font-semibold text-gray-900">
-                    {formData.adults + formData.children}
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-white/90 text-lg drop-shadow-md">Number of people:</span>
+                  <span className="font-semibold text-white text-lg drop-shadow-md">
+                    {formData.quantity}
                   </span>
                 </div>
-                <div className="border-t border-gray-300 pt-3 mt-3">
+                <div className="border-t border-white/30 pt-4 mt-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-lg font-bold text-gray-900">Total Amount:</span>
-                    <span className="text-2xl font-bold text-cyan-600">
-                      {currency === 'CAD' ? 'CAD' : 'USD'} ${(convertPrice(selectedPkg.price) * (formData.adults + formData.children)).toFixed(2)}
+                    <span className="text-xl font-bold text-white drop-shadow-lg">Total Deposit:</span>
+                    <span className="text-4xl font-bold text-cyan-300 drop-shadow-lg">
+                      {currency === 'CAD' ? 'CAD' : 'USD'} ${totalDeposit.toFixed(2)}
                     </span>
                   </div>
                 </div>
               </div>
 
+              {/* Terms and Conditions */}
+              <div className="flex items-start space-x-3 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <input
+                  type="checkbox"
+                  id="agreeToTerms"
+                  checked={formData.agreeToTerms}
+                  onChange={(e) => handleInputChange('agreeToTerms', e.target.checked)}
+                  className="mt-1 h-5 w-5 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded cursor-pointer"
+                />
+                <Label htmlFor="agreeToTerms" className="text-sm text-white/90 cursor-pointer drop-shadow-md">
+                  I agree to the terms and conditions and understand that this deposit is non-refundable. I confirm that all information provided is accurate.
+                </Label>
+              </div>
+
               {/* Pay Now Button */}
               <Button
-                className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white text-lg py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white text-xl font-bold py-7 rounded-xl shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 disabled={!formData.agreeToTerms}
               >
-                Pay Now with PayPal
+                <CreditCard className="w-6 h-6 mr-3" />
+                Pay ${totalDeposit.toFixed(2)} {currency} Deposit Now
               </Button>
 
-              <p className="text-center text-sm text-gray-500">
+              <p className="text-center text-sm text-white/70 drop-shadow-sm">
                 You will be redirected to PayPal to complete your payment securely
               </p>
             </div>

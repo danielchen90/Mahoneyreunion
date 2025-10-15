@@ -3,9 +3,7 @@
 import { useState } from "react"
 import EntrancePage from "@/components/entrance-page"
 import Navigation from "@/components/navigation"
-import ScrollExpandMedia from "@/components/scroll-expand-media"
-import AboutSection from "@/components/about-section"
-import RegistrationCTA from "@/components/registration-cta"
+import HomeContent from "@/components/home-content"
 import Footer from "@/components/footer"
 
 export default function Home() {
@@ -22,18 +20,7 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       <Navigation />
-      <ScrollExpandMedia
-        mediaType="image"
-        mediaSrc="/jorge-vasconez-CpeUoLVTAs8-unsplash.jpg"
-        bgImageSrc="/tropical-palm-trees-sunset-beach-florida-resort-pa.jpg"
-        title="Mahoney Family Reunion"
-        date="July 29 - August 3, 2026"
-        scrollToExpand="Scroll to explore our Orlando celebration"
-        textBlend={false}
-      >
-        <AboutSection />
-        <RegistrationCTA />
-      </ScrollExpandMedia>
+      <HomeContent />
       <Footer />
     </main>
   )

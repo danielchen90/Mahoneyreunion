@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { contactSubmissionsDB } from "@/lib/database"
+// Email notifications temporarily disabled for initial deployment
+// import { sendContactFormNotification } from "@/lib/email"
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,24 +25,54 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // TODO: Phase 2 - Save to Supabase database
-    // TODO: Phase 2 - Send email notification to admin
-    
-    // For now, just log the submission
+    const timestamp = new Date().toISOString()
+
+    // Save to Supabase database
+    const { data: submission, error: dbError } = await contactSubmissionsDB.create({
+      name,
+      email,
+      phone: phone || undefined,
+      subject,
+      message,
+    })
+
+    if (dbError) {
+      console.error("Database error:", dbError)
+      // Continue even if database fails - don't block the user
+    }
+
+    // Log the submission (for debugging)
     console.log("Contact form submission:", {
       name,
       email,
       phone: phone || "Not provided",
       subject,
       message,
-      timestamp: new Date().toISOString()
+      timestamp,
+      submissionId: submission?.id || "N/A",
     })
+
+    // Email notifications temporarily disabled for initial deployment
+    // TODO: Re-enable once RESEND_API_KEY is configured in Vercel
+    // sendContactFormNotification({
+    //   name,
+    //   email,
+    //   phone,
+    //   subject,
+    //   message,
+    //   timestamp,
+    //   submissionId: submission?.id,
+    // }).catch((error) => {
+    //   console.error("Error sending email notification:", error)
+    //   // Don't fail the request if email fails
+    // })
 
     // Return success response
     return NextResponse.json(
-      { 
-        success: true, 
-        message: "Message received successfully" 
+      {
+        success: true,
+        message: "Message received successfully",
+        submissionId: submission?.id,
       },
       { status: 200 }
     )

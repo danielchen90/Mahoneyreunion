@@ -65,6 +65,8 @@ const ScrollExpandMedia = ({
         if (newProgress >= 1) {
           setMediaFullyExpanded(true);
           setShowContent(true);
+          // Dispatch event when hero is fully expanded
+          window.dispatchEvent(new Event('heroFullyExpanded'));
         } else if (newProgress < 0.75) {
           setShowContent(false);
         }
@@ -98,6 +100,8 @@ const ScrollExpandMedia = ({
         if (newProgress >= 1) {
           setMediaFullyExpanded(true);
           setShowContent(true);
+          // Dispatch event when hero is fully expanded
+          window.dispatchEvent(new Event('heroFullyExpanded'));
         } else if (newProgress < 0.75) {
           setShowContent(false);
         }
