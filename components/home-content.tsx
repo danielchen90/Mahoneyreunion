@@ -4,11 +4,10 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { GlowCard } from "@/components/glow-card"
 import {
-  ExternalLink, Bed, Bath, Users, Home, Wifi, Car, Wind, Tv, UtensilsCrossed,
+  Bed, Bath, Users, Home, Wifi, Car, Wind, Tv, UtensilsCrossed,
   Dumbbell, Gamepad2, Baby, Snowflake, Shirt, Sun, Waves, Palmtree
 } from "lucide-react"
 import Image from "next/image"
-import Link from "next/link"
 import {
   Carousel,
   CarouselContent,
@@ -239,22 +238,6 @@ export default function HomeContent() {
                 <strong>{propertyDetails.nights} nights</strong> of family fun and memories!
               </p>
             </div>
-
-            {/* View Original VRBO Listing Button (Secondary) */}
-            <Link
-              href="https://www.vrbo.com/en-ca/cottage-rental/p4478728vb"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button
-                variant="outline"
-                size="lg"
-                className="bg-white/10 hover:bg-white/20 text-white border-2 border-white/30 hover:border-white/50 backdrop-blur-sm transition-all duration-300"
-              >
-                <ExternalLink className="w-5 h-5 mr-2" />
-                View Original VRBO Listing
-              </Button>
-            </Link>
           </div>
         </div>
 

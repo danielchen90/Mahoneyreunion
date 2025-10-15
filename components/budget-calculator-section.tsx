@@ -86,9 +86,12 @@ export default function BudgetCalculatorSection() {
   }, [adults, children, travelMethod, activities, currency])
 
   const calculateBudget = () => {
-    const totalPeople = adults + children
+    // IMPORTANT: Children 18 & under are FREE - only count adults for pricing
+    const totalPeople = adults // Only adults count for costs
+    const totalHeadcount = adults + children // Total for display purposes
 
     // Collective costs (paid to reunion organizers) - in CAD
+    // Only adults are charged - children 18 & under are FREE
     const accommodationCost = convertPrice(collectiveCosts.accommodation * totalPeople)
     const foodCost = convertPrice(collectiveCosts.food * totalPeople)
 
@@ -118,11 +121,57 @@ export default function BudgetCalculatorSection() {
   }
 
   const toggleActivity = (activityId: string) => {
-    setActivities(prev => 
+    setActivities(prev =>
       prev.includes(activityId)
         ? prev.filter(id => id !== activityId)
         : [...prev, activityId]
     )
+  }
+
+  const handleSaveEstimate = () => {
+    const totalHeadcount = adults + children
+    const estimateText = `
+MAHONEY FAMILY REUNION - BUDGET ESTIMATE
+Generated: ${new Date().toLocaleDateString()}
+
+FAMILY SIZE:
+- Adults (18+): ${adults}
+- Children (18 & under): ${children} (FREE - for planning purposes only)
+- Total Headcount: ${totalHeadcount}
+
+COLLECTIVE COSTS (Paid to Organizers):
+- Accommodation: ${formatCurrency(budget.accommodation)} (${formatCurrency(convertPrice(collectiveCosts.accommodation))}/adult)
+- Food (Breakfasts & Dinners): ${formatCurrency(budget.food)} (${formatCurrency(convertPrice(collectiveCosts.food))}/adult)
+- Subtotal: ${formatCurrency(budget.accommodation + budget.food)}
+
+INDIVIDUAL EXPENSES (Your Responsibility):
+- Travel: ${formatCurrency(budget.travel)}
+- Activities: ${formatCurrency(budget.activities)}
+- Personal Expenses (Est.): ${formatCurrency(budget.personalExpenses)}
+- Subtotal: ${formatCurrency(budget.travel + budget.activities + budget.personalExpenses)}
+
+TOTAL ESTIMATED BUDGET: ${formatCurrency(budget.total)}
+(Based on ${adults} adult${adults !== 1 ? 's' : ''})
+
+PAYMENT SCHEDULE:
+- Initial Deposit: ${formatCurrency(convertPrice(collectiveCosts.deposit))}/person
+- Due: December 1st, 2025
+
+NOTE: Children 18 & under attend FREE. Only adults are charged for accommodation and food costs.
+
+For more information, visit: https://mahoneyreunion.vercel.app
+    `.trim()
+
+    // Create a blob and download
+    const blob = new Blob([estimateText], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `mahoney-reunion-budget-estimate-${new Date().toISOString().split('T')[0]}.txt`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -225,11 +274,11 @@ export default function BudgetCalculatorSection() {
                           +
                         </Button>
                       </div>
-                      <p className="text-xs text-white/70 mt-1">Same cost as children</p>
+                      <p className="text-xs text-white/70 mt-1">Costs calculated per adult</p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-white/90 mb-2">Children (All Ages)</label>
+                      <label className="block text-sm font-medium text-white/90 mb-2">Children (18 & Under)</label>
                       <div className="flex items-center space-x-2">
                         <Button
                           variant="outline"
@@ -249,7 +298,7 @@ export default function BudgetCalculatorSection() {
                           +
                         </Button>
                       </div>
-                      <p className="text-xs text-white/70 mt-1">Same cost as adults</p>
+                      <p className="text-xs text-green-300 mt-1 font-semibold">✓ FREE - Planning purposes only</p>
                     </div>
                   </div>
                 </Card>
@@ -289,7 +338,14 @@ export default function BudgetCalculatorSection() {
                               <div className="flex-1">
                                 <h4 className="font-semibold text-amber-100 mb-2 drop-shadow-md">Important: Accommodation Cost Notice</h4>
                                 <p className="text-sm text-white/95 leading-relaxed drop-shadow-md">
-                                  Current accommodation costs are calculated based on <strong>20-person attendance</strong>. If fewer family members register, the cost per person will increase proportionally. This is why <strong>early registration is essential</strong> - it helps us provide accurate final pricing and ensures the best rates for everyone.
+                                  Current accommodation costs are calculated based on <strong>20-person attendance</strong>. The cost per person adjusts based on actual attendance:
+                                </p>
+                                <ul className="text-sm text-white/95 leading-relaxed drop-shadow-md mt-2 space-y-1 ml-4">
+                                  <li>• <strong>Fewer people</strong> = Higher cost per person</li>
+                                  <li>• <strong>More people</strong> = Lower cost per person</li>
+                                </ul>
+                                <p className="text-sm text-white/95 leading-relaxed drop-shadow-md mt-2">
+                                  This is why <strong>early registration is essential</strong> - it helps us provide accurate final pricing and ensures the best rates for everyone.
                                 </p>
                                 <p className="text-sm text-amber-100 mt-2 font-medium drop-shadow-md">
                                   💡 We encourage timely registration to lock in these projected costs and avoid last-minute price adjustments.
@@ -578,7 +634,9 @@ export default function BudgetCalculatorSection() {
                     <span className="text-lg font-bold text-white drop-shadow-lg">Total Budget</span>
                     <span className="text-3xl font-bold text-white drop-shadow-lg">{formatCurrency(budget.total)}</span>
                   </div>
-                  <p className="text-xs text-white/90 mt-2 drop-shadow-md">For {adults + children} {adults + children === 1 ? 'person' : 'people'}</p>
+                  <p className="text-xs text-white/90 mt-2 drop-shadow-md">
+                    For {adults} adult{adults !== 1 ? 's' : ''}{children > 0 ? ` + ${children} child${children !== 1 ? 'ren' : ''} (FREE)` : ''}
+                  </p>
                 </div>
               </div>
 
@@ -605,6 +663,7 @@ export default function BudgetCalculatorSection() {
                 </Button>
                 <Button
                   variant="outline"
+                  onClick={handleSaveEstimate}
                   className="w-full border-white/30 text-white hover:bg-white/10 flex items-center justify-center space-x-2"
                 >
                   <Download className="w-4 h-4" />
