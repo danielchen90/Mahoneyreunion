@@ -22,6 +22,51 @@ export interface ContactSubmission {
   updated_at: string
 }
 
+export interface Registration {
+  id: string
+  email: string
+  phone?: string
+  adults: number
+  children: number
+  total_amount: number
+  currency: string
+  payment_type: string
+  payment_status: string
+  stripe_session_id?: string
+  stripe_customer_id?: string
+  special_requests?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Payment {
+  id: string
+  registration_id: string
+  stripe_payment_intent_id?: string
+  stripe_charge_id?: string
+  amount: number
+  currency: string
+  status: string
+  payment_method?: string
+  receipt_url?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Attendee {
+  id: string
+  registration_id: string
+  full_name: string
+  email?: string
+  phone?: string
+  age_group: string
+  dietary_restrictions?: string
+  emergency_contact_name?: string
+  emergency_contact_phone?: string
+  created_at: string
+  updated_at: string
+}
+
 /**
  * Contact Submissions Database Operations
  */
@@ -1122,3 +1167,240 @@ export const filesDB = {
   },
 }
 
+/**
+ * Registrations Database Operations
+ */
+export const registrationsDB = {
+  /**
+   * Create a new registration
+   */
+  async create(data: {
+    email: string
+    phone?: string
+    adults: number
+    children: number
+    total_amount: number
+    currency: string
+    payment_type: string
+    payment_status: string
+    stripe_session_id?: string
+    stripe_customer_id?: string
+    special_requests?: string
+  }): Promise<{ data: Registration | null; error: any }> {
+    try {
+      const result = await sql`
+        INSERT INTO registrations (
+          email, phone, adults, children, total_amount, currency,
+          payment_type, payment_status, stripe_session_id, stripe_customer_id, special_requests
+        )
+        VALUES (
+          ${data.email}, ${data.phone || null}, ${data.adults}, ${data.children},
+          ${data.total_amount}, ${data.currency}, ${data.payment_type}, ${data.payment_status},
+          ${data.stripe_session_id || null}, ${data.stripe_customer_id || null}, ${data.special_requests || null}
+        )
+        RETURNING *
+      `
+      return { data: result[0] as Registration, error: null }
+    } catch (error) {
+      console.error('Database error:', error)
+      return { data: null, error }
+    }
+  },
+
+  /**
+   * Get all registrations
+   */
+  async getAll(): Promise<{ data: Registration[] | null; error: any }> {
+    try {
+      const result = await sql`
+        SELECT * FROM registrations
+        ORDER BY created_at DESC
+      `
+      return { data: result as Registration[], error: null }
+    } catch (error) {
+      console.error('Database error:', error)
+      return { data: null, error }
+    }
+  },
+
+  /**
+   * Get registration by ID
+   */
+  async getById(id: string): Promise<{ data: Registration | null; error: any }> {
+    try {
+      const result = await sql`
+        SELECT * FROM registrations WHERE id = ${id}
+      `
+      return { data: result[0] as Registration || null, error: null }
+    } catch (error) {
+      console.error('Database error:', error)
+      return { data: null, error }
+    }
+  },
+
+  /**
+   * Get registration by Stripe session ID
+   */
+  async getByStripeSessionId(sessionId: string): Promise<{ data: Registration | null; error: any }> {
+    try {
+      const result = await sql`
+        SELECT * FROM registrations WHERE stripe_session_id = ${sessionId}
+      `
+      return { data: result[0] as Registration || null, error: null }
+    } catch (error) {
+      console.error('Database error:', error)
+      return { data: null, error }
+    }
+  },
+
+  /**
+   * Update registration
+   */
+  async update(id: string, data: {
+    payment_status?: string
+    stripe_customer_id?: string
+  }): Promise<{ data: Registration | null; error: any }> {
+    try {
+      const updates: string[] = []
+
+      if (data.payment_status !== undefined) updates.push(`payment_status = '${data.payment_status}'`)
+      if (data.stripe_customer_id !== undefined) updates.push(`stripe_customer_id = '${data.stripe_customer_id}'`)
+
+      updates.push(`updated_at = NOW()`)
+
+      const result = await sql`
+        UPDATE registrations
+        SET ${sql.unsafe(updates.join(', '))}
+        WHERE id = ${id}
+        RETURNING *
+      `
+      return { data: result[0] as Registration || null, error: null }
+    } catch (error) {
+      console.error('Database error:', error)
+      return { data: null, error }
+    }
+  },
+}
+
+/**
+ * Payments Database Operations
+ */
+export const paymentsDB = {
+  /**
+   * Create a new payment
+   */
+  async create(data: {
+    registration_id: string
+    stripe_payment_intent_id?: string
+    stripe_charge_id?: string
+    amount: number
+    currency: string
+    status: string
+    payment_method?: string
+    receipt_url?: string
+  }): Promise<{ data: Payment | null; error: any }> {
+    try {
+      const result = await sql`
+        INSERT INTO payments (
+          registration_id, stripe_payment_intent_id, stripe_charge_id,
+          amount, currency, status, payment_method, receipt_url
+        )
+        VALUES (
+          ${data.registration_id}, ${data.stripe_payment_intent_id || null}, ${data.stripe_charge_id || null},
+          ${data.amount}, ${data.currency}, ${data.status}, ${data.payment_method || null}, ${data.receipt_url || null}
+        )
+        RETURNING *
+      `
+      return { data: result[0] as Payment, error: null }
+    } catch (error) {
+      console.error('Database error:', error)
+      return { data: null, error }
+    }
+  },
+
+  /**
+   * Get payments by registration ID
+   */
+  async getByRegistrationId(registrationId: string): Promise<{ data: Payment[] | null; error: any }> {
+    try {
+      const result = await sql`
+        SELECT * FROM payments WHERE registration_id = ${registrationId}
+        ORDER BY created_at DESC
+      `
+      return { data: result as Payment[], error: null }
+    } catch (error) {
+      console.error('Database error:', error)
+      return { data: null, error }
+    }
+  },
+}
+
+/**
+ * Attendees Database Operations
+ */
+export const attendeesDB = {
+  /**
+   * Create a new attendee
+   */
+  async create(data: {
+    registration_id: string
+    full_name: string
+    email?: string
+    phone?: string
+    age_group: string
+    dietary_restrictions?: string
+    emergency_contact_name?: string
+    emergency_contact_phone?: string
+  }): Promise<{ data: Attendee | null; error: any }> {
+    try {
+      const result = await sql`
+        INSERT INTO attendees (
+          registration_id, full_name, email, phone, age_group,
+          dietary_restrictions, emergency_contact_name, emergency_contact_phone
+        )
+        VALUES (
+          ${data.registration_id}, ${data.full_name}, ${data.email || null}, ${data.phone || null},
+          ${data.age_group}, ${data.dietary_restrictions || null},
+          ${data.emergency_contact_name || null}, ${data.emergency_contact_phone || null}
+        )
+        RETURNING *
+      `
+      return { data: result[0] as Attendee, error: null }
+    } catch (error) {
+      console.error('Database error:', error)
+      return { data: null, error }
+    }
+  },
+
+  /**
+   * Get attendees by registration ID
+   */
+  async getByRegistrationId(registrationId: string): Promise<{ data: Attendee[] | null; error: any }> {
+    try {
+      const result = await sql`
+        SELECT * FROM attendees WHERE registration_id = ${registrationId}
+        ORDER BY created_at ASC
+      `
+      return { data: result as Attendee[], error: null }
+    } catch (error) {
+      console.error('Database error:', error)
+      return { data: null, error }
+    }
+  },
+
+  /**
+   * Get all attendees
+   */
+  async getAll(): Promise<{ data: Attendee[] | null; error: any }> {
+    try {
+      const result = await sql`
+        SELECT * FROM attendees
+        ORDER BY created_at DESC
+      `
+      return { data: result as Attendee[], error: null }
+    } catch (error) {
+      console.error('Database error:', error)
+      return { data: null, error }
+    }
+  },
+}

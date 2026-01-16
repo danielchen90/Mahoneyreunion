@@ -6,12 +6,17 @@ import { GlowCard } from "@/components/glow-card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import StripeButton from "@/components/stripe-button"
 import { Calendar, Star, Users, CreditCard, CheckCircle2 } from "lucide-react"
 
 interface AttendeeInfo {
   fullName: string
   email: string
   phone: string
+  ageGroup: string
+  dietaryRestrictions?: string
+  emergencyContactName?: string
+  emergencyContactPhone?: string
 }
 
 interface RegistrationForm {
@@ -34,6 +39,12 @@ export default function RegistrationSection() {
     emergencyPhone: "",
     agreeToTerms: false,
   })
+  const [formErrors, setFormErrors] = useState<string[]>([])
+
+  const handlePaymentError = (error: any) => {
+    console.error('Payment error:', error)
+    setFormErrors(['Payment failed. Please try again or contact support.'])
+  }
 
   // Only show deposit package (hide full payment temporarily)
   const packages = [
@@ -50,7 +61,15 @@ export default function RegistrationSection() {
   // Update attendees array when quantity changes
   useEffect(() => {
     const newAttendees = Array.from({ length: formData.quantity }, (_, index) => {
-      return formData.attendees[index] || { fullName: "", email: "", phone: "" }
+      return formData.attendees[index] || {
+        fullName: "",
+        email: "",
+        phone: "",
+        ageGroup: "adult",
+        dietaryRestrictions: "",
+        emergencyContactName: formData.emergencyContact,
+        emergencyContactPhone: formData.emergencyPhone
+      }
     })
     setFormData(prev => ({ ...prev, attendees: newAttendees }))
   }, [formData.quantity])
@@ -388,18 +407,46 @@ export default function RegistrationSection() {
                 </Label>
               </div>
 
-              {/* Pay Now Button */}
-              <Button
-                className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white text-xl font-bold py-7 rounded-xl shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                disabled={!formData.agreeToTerms}
-              >
-                <CreditCard className="w-6 h-6 mr-3" />
-                Pay ${totalDeposit.toFixed(2)} {currency} Deposit Now
-              </Button>
+              {/* Error Messages */}
+              {formErrors.length > 0 && (
+                <div className="bg-red-500/20 border border-red-400/50 rounded-lg p-4">
+                  {formErrors.map((error, index) => (
+                    <p key={index} className="text-red-200 text-sm">{error}</p>
+                  ))}
+                </div>
+              )}
 
-              <p className="text-center text-sm text-white/70 drop-shadow-sm">
-                You will be redirected to PayPal to complete your payment securely
-              </p>
+              {/* Stripe Payment Button */}
+              {formData.agreeToTerms && (
+                <StripeButton
+                  amount={totalDeposit}
+                  currency={currency}
+                  registrationData={{
+                    firstName: formData.attendees[0]?.fullName.split(' ')[0] || '',
+                    lastName: formData.attendees[0]?.fullName.split(' ').slice(1).join(' ') || '',
+                    email: formData.attendees[0]?.email || '',
+                    phone: formData.attendees[0]?.phone || '',
+                    adults: formData.quantity,
+                    children: 0,
+                    specialRequests: formData.specialRequests,
+                    attendees: formData.attendees.map(att => ({
+                      ...att,
+                      emergencyContactName: formData.emergencyContact,
+                      emergencyContactPhone: formData.emergencyPhone
+                    })),
+                  }}
+                  onError={handlePaymentError}
+                  paymentType="deposit"
+                />
+              )}
+
+              {!formData.agreeToTerms && (
+                <div className="text-center p-4 bg-orange-500/20 border border-orange-400/50 rounded-lg">
+                  <p className="text-orange-200 text-sm">
+                    Please agree to the terms and conditions to proceed with payment
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}

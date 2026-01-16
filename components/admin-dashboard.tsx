@@ -34,12 +34,13 @@ import AdminUsers from "@/components/admin-users"
 import AdminTasks from "@/components/admin-tasks"
 import AdminMeetings from "@/components/admin-meetings"
 import AdminFiles from "@/components/admin-files"
+import AdminRegistrations from "@/components/admin-registrations"
 
 interface AdminDashboardProps {
   onLogout: () => void
 }
 
-type TabType = 'overview' | 'messages' | 'users' | 'tasks' | 'meetings' | 'files'
+type TabType = 'overview' | 'messages' | 'registrations' | 'users' | 'tasks' | 'meetings' | 'files'
 
 export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [pages, setPages] = useState<PageConfig[]>([])
@@ -156,6 +157,17 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             >
               <Mail className="w-4 h-4 mr-2" />
               Contact Messages
+            </Button>
+            <Button
+              onClick={() => setActiveTab('registrations')}
+              variant={activeTab === 'registrations' ? 'default' : 'ghost'}
+              className={activeTab === 'registrations'
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+              }
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Registrations
             </Button>
             <Button
               onClick={() => setActiveTab('users')}
@@ -347,6 +359,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       {/* Messages Tab */}
       {activeTab === 'messages' && (
         <AdminContactMessages />
+      )}
+
+      {/* Registrations Tab */}
+      {activeTab === 'registrations' && (
+        <AdminRegistrations />
       )}
 
       {/* Users Tab */}
