@@ -83,14 +83,14 @@ export default function AdminRegistrations() {
 
   // Filter registrations by search query
   const filteredRegistrations = registrations.filter(reg =>
-    reg.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    reg.attendees.some(att => att.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
+    reg.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    reg.attendees?.some(att => att.full_name?.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
-  // Calculate stats
+  // Calculate stats with safety checks
   const totalRegistrations = registrations.length
-  const totalAttendees = registrations.reduce((sum, reg) => sum + reg.adults + reg.children, 0)
-  const totalRevenue = registrations.reduce((sum, reg) => sum + reg.total_amount, 0)
+  const totalAttendees = registrations.reduce((sum, reg) => sum + (reg.adults || 0) + (reg.children || 0), 0)
+  const totalRevenue = registrations.reduce((sum, reg) => sum + (reg.total_amount || 0), 0)
   const completedPayments = registrations.filter(reg => reg.payment_status === 'completed').length
 
   return (
@@ -210,7 +210,7 @@ export default function AdminRegistrations() {
                   <div className="grid md:grid-cols-3 gap-4 text-sm text-white/70">
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4" />
-                      <span>{registration.email}</span>
+                      <span>{registration.email || 'N/A'}</span>
                     </div>
                     {registration.phone && (
                       <div className="flex items-center gap-2">
@@ -220,7 +220,7 @@ export default function AdminRegistrations() {
                     )}
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4" />
-                      <span>{registration.adults} adults, {registration.children} children</span>
+                      <span>{registration.adults || 0} adults, {registration.children || 0} children</span>
                     </div>
                   </div>
 
@@ -228,12 +228,12 @@ export default function AdminRegistrations() {
                     <div className="flex items-center gap-2 text-white/70">
                       <DollarSign className="w-4 h-4" />
                       <span className="font-semibold text-white">
-                        {registration.currency} ${registration.total_amount.toFixed(2)}
+                        {registration.currency || 'CAD'} ${(registration.total_amount || 0).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-white/70">
                       <Calendar className="w-4 h-4" />
-                      <span>{new Date(registration.created_at).toLocaleDateString()}</span>
+                      <span>{registration.created_at ? new Date(registration.created_at).toLocaleDateString() : 'N/A'}</span>
                     </div>
                   </div>
                 </div>
@@ -294,20 +294,20 @@ export default function AdminRegistrations() {
 
               {/* Attendees */}
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">Attendees ({selectedRegistration.attendees.length})</h3>
+                <h3 className="text-lg font-semibold text-white mb-3">Attendees ({selectedRegistration.attendees?.length || 0})</h3>
                 <div className="space-y-3">
-                  {selectedRegistration.attendees.map((attendee, index) => (
-                    <Card key={attendee.id} className="p-4 bg-white/10 backdrop-blur-md border border-white/30">
+                  {selectedRegistration.attendees?.map((attendee, index) => (
+                    <Card key={attendee.id || index} className="p-4 bg-white/10 backdrop-blur-md border border-white/30">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <p className="font-semibold text-white">{attendee.full_name}</p>
+                            <p className="font-semibold text-white">{attendee.full_name || 'N/A'}</p>
                             <Badge className={
                               attendee.age_group === 'adult'
                                 ? 'bg-blue-500/20 text-blue-300 border-blue-400/50'
                                 : 'bg-green-500/20 text-green-300 border-green-400/50'
                             }>
-                              {attendee.age_group}
+                              {attendee.age_group || 'N/A'}
                             </Badge>
                           </div>
                           <div className="grid md:grid-cols-2 gap-2 text-sm text-white/70">
@@ -352,7 +352,7 @@ export default function AdminRegistrations() {
                     <div>
                       <p className="text-white/50 text-sm">Amount</p>
                       <p className="text-white font-semibold">
-                        {selectedRegistration.currency} ${selectedRegistration.total_amount.toFixed(2)}
+                        {selectedRegistration.currency || 'CAD'} ${(selectedRegistration.total_amount || 0).toFixed(2)}
                       </p>
                     </div>
                     <div>
@@ -374,7 +374,7 @@ export default function AdminRegistrations() {
                     <div>
                       <p className="text-white/50 text-sm">Date</p>
                       <p className="text-white">
-                        {new Date(selectedRegistration.created_at).toLocaleString()}
+                        {selectedRegistration.created_at ? new Date(selectedRegistration.created_at).toLocaleString() : 'N/A'}
                       </p>
                     </div>
                   </div>
