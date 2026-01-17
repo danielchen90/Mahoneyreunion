@@ -1,5 +1,7 @@
 # 🚀 Deploy Registration System to Vercel
 
+**Note:** This project uses npm for package management. The pnpm-lock.yaml has been removed.
+
 ## ✅ What's Included in This Deployment
 
 ### **New Features:**
