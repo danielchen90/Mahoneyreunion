@@ -29,7 +29,7 @@ interface RegistrationForm {
 }
 
 export default function RegistrationSection() {
-  const [selectedPackage, setSelectedPackage] = useState<string>("deposit") // Auto-select deposit
+  const [selectedPackage, setSelectedPackage] = useState<string>("") // No auto-select
   const [currency, setCurrency] = useState<'CAD' | 'USD'>('CAD')
   const [formData, setFormData] = useState<RegistrationForm>({
     quantity: 1,
@@ -46,7 +46,7 @@ export default function RegistrationSection() {
     setFormErrors(['Payment failed. Please try again or contact support.'])
   }
 
-  // Only show deposit package (hide full payment temporarily)
+  // Both payment options available
   const packages = [
     {
       id: "deposit",
@@ -54,6 +54,14 @@ export default function RegistrationSection() {
       price: 100,
       features: ["Secure your spot", "Pay balance later", "Flexible payment options"],
       icon: Calendar,
+      popular: false,
+    },
+    {
+      id: "full_payment",
+      name: "$350 Full Payment",
+      price: 350,
+      features: ["Complete payment upfront", "All-inclusive package", "No balance due later"],
+      icon: CreditCard,
       popular: true,
     },
   ]
@@ -98,7 +106,7 @@ export default function RegistrationSection() {
   }
 
   const selectedPkg = packages.find(pkg => pkg.id === selectedPackage)
-  const totalDeposit = selectedPkg ? convertPrice(selectedPkg.price) * formData.quantity : 0
+  const totalAmount = selectedPkg ? convertPrice(selectedPkg.price) * formData.quantity : 0
 
   return (
     <div id="registration" className="py-20 relative">
@@ -143,8 +151,8 @@ export default function RegistrationSection() {
           </div>
         </div>
 
-        {/* Payment Option - Single Deposit Package */}
-        <div className="max-w-2xl mx-auto mb-12">
+        {/* Payment Options - Two Selectable Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           {packages.map((pkg) => {
             const IconComponent = pkg.icon
             const isSelected = selectedPackage === pkg.id
@@ -152,46 +160,62 @@ export default function RegistrationSection() {
             return (
               <div key={pkg.id} className="relative">
                 <GlowCard
-                  glowColor="purple"
+                  glowColor={isSelected ? "cyan" : "purple"}
                   customSize={true}
-                  className="relative ring-4 ring-cyan-400 shadow-2xl shadow-cyan-500/50"
+                  className={`relative cursor-pointer transition-all duration-300 ${
+                    isSelected
+                      ? 'ring-4 ring-cyan-400 shadow-2xl shadow-cyan-500/50 scale-105'
+                      : 'ring-2 ring-white/20 hover:ring-cyan-300/50 hover:scale-102'
+                  }`}
+                  onClick={() => handlePackageSelect(pkg.id)}
                 >
-                  {/* Selected Badge - Top Right */}
-                  <div className="absolute -top-3 -right-3 z-20">
-                    <div className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-pulse">
-                      <CheckCircle2 className="w-5 h-5" />
-                      <span className="font-bold text-sm">SELECTED</span>
+                  {/* Popular Badge */}
+                  {pkg.popular && (
+                    <div className="absolute -top-3 -left-3 z-20">
+                      <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-current" />
+                        <span className="font-bold text-xs">POPULAR</span>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  <div className="p-8 bg-cyan-500/10 transition-colors duration-300">
+                  {/* Selected Badge */}
+                  {isSelected && (
+                    <div className="absolute -top-3 -right-3 z-20">
+                      <div className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center gap-1 animate-pulse">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span className="font-bold text-xs">SELECTED</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className={`p-6 transition-colors duration-300 ${
+                    isSelected ? 'bg-cyan-500/10' : 'bg-white/5'
+                  }`}>
                     <div className="flex flex-col items-center text-center">
                       {/* Icon */}
-                      <div className="p-4 rounded-xl mb-4 bg-purple-500/20">
-                        <IconComponent className="w-10 h-10 text-white" />
+                      <div className={`p-3 rounded-xl mb-3 ${
+                        isSelected ? 'bg-cyan-500/20' : 'bg-purple-500/20'
+                      }`}>
+                        <IconComponent className="w-8 h-8 text-white" />
                       </div>
 
                       {/* Package Name */}
-                      <div className="mb-3">
-                        <h3 className="text-3xl font-bold text-white mb-2">{pkg.name}</h3>
-                        <span className="inline-block px-4 py-1.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-semibold rounded-full">
-                          SECURE YOUR SPOT
-                        </span>
-                      </div>
+                      <h3 className="text-2xl font-bold text-white mb-2">{pkg.name}</h3>
 
                       {/* Price */}
-                      <div className="mb-6">
-                        <p className="text-5xl font-bold text-white">
+                      <div className="mb-4">
+                        <p className="text-4xl font-bold text-white">
                           {currency === 'CAD' ? 'CAD' : 'USD'} ${convertPrice(pkg.price).toFixed(2)}
                         </p>
-                        <span className="text-base text-white/70">per person</span>
+                        <span className="text-sm text-white/70">per person</span>
                       </div>
 
                       {/* Features */}
-                      <ul className="space-y-3 w-full max-w-md">
+                      <ul className="space-y-2 w-full">
                         {pkg.features.map((feature, idx) => (
-                          <li key={idx} className="flex items-center text-white/90 text-base">
-                            <svg className="w-6 h-6 mr-3 text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <li key={idx} className="flex items-center text-white/90 text-sm">
+                            <svg className="w-5 h-5 mr-2 text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             <span>{feature}</span>
@@ -199,13 +223,17 @@ export default function RegistrationSection() {
                         ))}
                       </ul>
 
-                      {/* Note about full payment */}
-                      <div className="mt-6 p-4 bg-white/10 rounded-lg border border-white/20">
-                        <p className="text-sm text-white/80">
-                          <strong>Note:</strong> Full payment options will be available once final costs are confirmed.
-                          This deposit secures your spot for the reunion.
-                        </p>
-                      </div>
+                      {/* Select Button */}
+                      <button
+                        onClick={() => handlePackageSelect(pkg.id)}
+                        className={`mt-6 w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 ${
+                          isSelected
+                            ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg'
+                            : 'bg-white/10 text-white hover:bg-white/20 border border-white/30'
+                        }`}
+                      >
+                        {isSelected ? 'Selected' : 'Select This Option'}
+                      </button>
                     </div>
                   </div>
                 </GlowCard>
@@ -214,7 +242,26 @@ export default function RegistrationSection() {
           })}
         </div>
 
-        {/* Registration Form - Always shown since deposit is auto-selected */}
+        {/* Prompt to select a payment option */}
+        {!selectedPackage && (
+          <div className="max-w-2xl mx-auto mb-12 text-center">
+            <div className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 backdrop-blur-sm rounded-xl p-8 border-2 border-cyan-400/40">
+              <div className="mb-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cyan-500/20 mb-4">
+                  <CreditCard className="w-8 h-8 text-cyan-400" />
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-3 drop-shadow-lg">
+                Choose Your Payment Option
+              </h3>
+              <p className="text-white/80 text-lg drop-shadow-md">
+                Select either the deposit or full payment option above to continue with your registration
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Registration Form - Show only when package is selected */}
         {selectedPackage && selectedPkg && (
           <div className="bg-white/15 backdrop-blur-md rounded-2xl shadow-2xl p-8 md:p-10 border border-white/30">
             {/* Selected Package Summary with Total */}
@@ -228,9 +275,11 @@ export default function RegistrationSection() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-white/80 mb-1 drop-shadow-md">Total Deposit</p>
+                  <p className="text-sm text-white/80 mb-1 drop-shadow-md">
+                    {selectedPackage === 'deposit' ? 'Total Deposit' : 'Total Amount'}
+                  </p>
                   <p className="text-4xl font-bold text-cyan-300 drop-shadow-lg">
-                    {currency === 'CAD' ? 'CAD' : 'USD'} ${totalDeposit.toFixed(2)}
+                    {currency === 'CAD' ? 'CAD' : 'USD'} ${totalAmount.toFixed(2)}
                   </p>
                   <p className="text-xs text-white/70 drop-shadow-sm">
                     {formData.quantity} {formData.quantity === 1 ? 'person' : 'people'}
@@ -372,7 +421,9 @@ export default function RegistrationSection() {
               {/* Total Amount Display */}
               <div className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 backdrop-blur-sm rounded-xl p-6 border-2 border-cyan-400/40">
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-white/90 text-lg drop-shadow-md">Deposit per person:</span>
+                  <span className="text-white/90 text-lg drop-shadow-md">
+                    {selectedPackage === 'deposit' ? 'Deposit per person:' : 'Price per person:'}
+                  </span>
                   <span className="font-semibold text-white text-lg drop-shadow-md">
                     {currency === 'CAD' ? 'CAD' : 'USD'} ${convertPrice(selectedPkg.price).toFixed(2)}
                   </span>
@@ -385,9 +436,11 @@ export default function RegistrationSection() {
                 </div>
                 <div className="border-t border-white/30 pt-4 mt-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-xl font-bold text-white drop-shadow-lg">Total Deposit:</span>
+                    <span className="text-xl font-bold text-white drop-shadow-lg">
+                      {selectedPackage === 'deposit' ? 'Total Deposit:' : 'Total Amount:'}
+                    </span>
                     <span className="text-4xl font-bold text-cyan-300 drop-shadow-lg">
-                      {currency === 'CAD' ? 'CAD' : 'USD'} ${totalDeposit.toFixed(2)}
+                      {currency === 'CAD' ? 'CAD' : 'USD'} ${totalAmount.toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -419,7 +472,7 @@ export default function RegistrationSection() {
               {/* Stripe Payment Button */}
               {formData.agreeToTerms && (
                 <StripeButton
-                  amount={totalDeposit}
+                  amount={totalAmount}
                   currency={currency}
                   registrationData={{
                     firstName: formData.attendees[0]?.fullName.split(' ')[0] || '',
@@ -436,7 +489,7 @@ export default function RegistrationSection() {
                     })),
                   }}
                   onError={handlePaymentError}
-                  paymentType="deposit"
+                  paymentType={selectedPackage === 'deposit' ? 'deposit' : 'full_payment'}
                 />
               )}
 
